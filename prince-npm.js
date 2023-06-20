@@ -57,7 +57,6 @@ var princeVersion = function () {
     if (princeConfig) {
         if (princeConfig.version) {
             version = princeConfig.version;
-            console.log("Prince version " + version + " specified in package.json.");
             return version;
         }
     } else {
@@ -65,10 +64,19 @@ var princeVersion = function () {
     }
 };
 
+/*  determine whether to use prince or prince-books executable */
+var princeExecutable = function () {
+    var executable = "prince";
+    if (princeVersion().includes("books")) {
+        executable = "prince-books";
+    }
+    return executable;
+}
+
 /*  determine path and version of prince(1)  */
 var princeInfo = function () {
     return new promise(function (resolve, reject) {
-        which("prince", function (error, filename) {
+        which(princeExecutable, function (error, filename) {
             if (error) {
                 reject("prince(1) not found in PATH: " + error);
                 return;
@@ -99,10 +107,20 @@ var princeInfo = function () {
 var princeDownloadURL = function () {
     return new promise(function (resolve /*, reject */) {
         var id = process.arch + "-" + process.platform;
-        if (id.match(/^ia32-win32$/))
-            resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-win32-setup.exe");
-        else if (id.match(/^x64-win32$/))
-            resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-win64-setup.exe");
+        if (id.match(/^ia32-win32$/)) {
+            if (princeVersion().includes("books")) {
+                resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-win32.zip");
+            } else {
+                resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-win32-setup.exe");
+            }
+        }
+        else if (id.match(/^x64-win32$/)) {
+            if (princeVersion().includes("books")) {
+                resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-win64.zip");
+            } else {
+                resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-win64-setup.exe");
+            }
+        }
         else if (id.match(/^(?:ia32|x64)-darwin/))
             resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-macos.zip");
         else if (id.match(/^arm64-darwin/))
@@ -279,8 +297,8 @@ if (process.argv[2] === "install") {
                 console.log("++ locally unpacking PrinceXML distribution");
                 destdir = path.join(__dirname, "prince");
                 var destfile;
-                if (process.platform === "win32") {
-                    destfile = path.join(__dirname, "prince.exe");
+                if (process.platform === "win32" && princeExecutable() === "prince") {
+                    destfile = path.join(__dirname, princeExecutable() + ".exe");
                     fs.writeFileSync(destfile, data, { encoding: null });
                     var args = [ "/s", "/a", "/vTARGETDIR=\"" + path.resolve(destdir) + "\" /qn" ];
                     child_process.execFile(destfile, args, function (error, stdout, stderr) {
@@ -299,12 +317,29 @@ if (process.argv[2] === "install") {
                         }
                     });
                 }
+                else if (process.platform === "win32" && princeExecutable() === "prince-books") {
+                    destfile = path.join(__dirname, "prince.zip");
+                    fs.writeFileSync(destfile, data, { encoding: null });
+                    mkdirp.sync(destdir);
+                    var winArch = "win32";
+                    if (process.arch.includes("64")) {
+                        winArch = "win64";
+                    }
+                    extractZipfile(destfile, "prince-" + princeVersion() + "-" + winArch, destdir).then(function () {
+                        fs.chmodSync(path.join(destdir, "lib/prince/bin/" + princeExecutable()), fs.constants.S_IRWXU
+                            | fs.constants.S_IRGRP | fs.constants.S_IXGRP | fs.constants.S_IROTH | fs.constants.S_IXOTH);
+                        fs.unlinkSync(destfile);
+                        console.log("-- OK: local PrinceXML installation now available");
+                    }, function (error) {
+                        console.log(chalk.red("** ERROR: failed to extract: " + error));
+                    });
+                }
                 else if (process.platform === "darwin") {
                     destfile = path.join(__dirname, "prince.zip");
                     fs.writeFileSync(destfile, data, { encoding: null });
                     mkdirp.sync(destdir);
                     extractZipfile(destfile, "prince-" + princeVersion() + "-macos", destdir).then(function () {
-                        fs.chmodSync(path.join(destdir, "lib/prince/bin/prince"), fs.constants.S_IRWXU
+                        fs.chmodSync(path.join(destdir, "lib/prince/bin/" + princeExecutable()), fs.constants.S_IRWXU
                             | fs.constants.S_IRGRP | fs.constants.S_IXGRP | fs.constants.S_IROTH | fs.constants.S_IXOTH);
                         fs.unlinkSync(destfile);
                         console.log("-- OK: local PrinceXML installation now available");

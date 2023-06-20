@@ -5,12 +5,6 @@ Node-Prince
 [Node](http://nodejs.org/) API for executing the XML/HTML to PDF renderer
 [PrinceXML](http://www.princexml.com/) via `prince` CLI.
 
-<p/>
-<img src="https://nodei.co/npm/prince.png?downloads=true&stars=true" alt=""/>
-
-<p/>
-<img src="https://david-dm.org/rse/node-prince.png" alt=""/>
-
 Abstract
 --------
 
@@ -26,6 +20,42 @@ automatically download, locally unpack and use a PrinceXML distribution,
 there is no need for any previously available global PrinceXML
 installation. Just depend on this Node extension and PrinceXML is
 available!
+
+### Electric Book Works version
+
+This fork was created by Electric Book Works, and differs from [@res's version](https://github.com/rse/node-prince) in several important ways.
+
+* You can set which version of Prince you want to install by specifying that in your project's `package.json` file. E.g.:
+  ```json
+  "prince": {
+    "version": "11.4"
+  }
+  ```
+* Specify a non-semver, latest version of Prince using `YYYMMDD`. E.g.:
+  ```json
+  "prince": {
+    "version": "20220701"
+  }
+  ```
+* You can also specify a specific version of Prince for Books using `books-YYYMMDD`. E.g.:
+  ```json
+    "prince": {
+      "version": "books-20220701"
+    }
+  ```
+* In order to use a [fully licensed version of Prince](https://www.princexml.com/purchase/), create a folder in your project called `_prince` and save your purchased `license.dat` file in there. If you want to change the location of your license file, you can do that in `package.json`. E.g. here we use version `10r7` and save the license file in a very specific place on our machine:
+  ```json
+    "prince": {
+      "version": "10r7",
+      "license": "C:\Users\Jo\Documents\Prince\license.dat"
+    }
+  ```
+
+Note that on Mac, you may need to set permissions on the Prince binary this package installs in order for your machine to run it as an executable. To do this, you can run this command at the Terminal from your project folder:
+
+```sh
+chmod 700 node_modules/prince/prince/lib/prince-books/bin/prince-books
+```
 
 Installation
 ------------
