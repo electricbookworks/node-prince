@@ -53,15 +53,13 @@ var mkdirp        = require("mkdirp");
 var princeVersion = function () {
     var parentPackage = path.normalize(process.env.INIT_CWD + "/package.json");
     var princeConfig = require(parentPackage).prince;
-    var version = "14.2"; // default
-    if (princeConfig) {
-        if (princeConfig.version) {
-            version = princeConfig.version;
-            return version;
-        }
-    } else {
-        return;
+    var version = "16.1"; // default
+
+    if (princeConfig?.version) {
+        version = princeConfig.version;
     }
+
+    return version;
 };
 
 /*  determine whether to use prince or prince-books executable */
@@ -150,6 +148,10 @@ var princeDownloadURL = function () {
                         resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-ubuntu18.04-amd64.tar.gz");
                     else if (platform.match(/^amd64-ubuntu2[01](?:\.\d+)*$/))
                         resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-ubuntu20.04-amd64.tar.gz");
+                    else if (platform.match(/^amd64-ubuntu22(?:\.\d+)*$/))
+                        resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-ubuntu22.04-amd64.tar.gz");
+                    else if (platform.match(/^amd64-ubuntu24(?:\.\d+)*$/))
+                        resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-ubuntu24.04-amd64.tar.gz");
                     else if (platform.match(/^amd64-debian10(?:\.\d+)*$/))
                         resolve("https://www.princexml.com/download/prince-" + princeVersion() + "-debian10-amd64.tar.gz");
                     else if (platform.match(/^amd64-debian9(?:\.\d+)*$/))
