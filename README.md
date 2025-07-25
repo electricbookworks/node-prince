@@ -23,7 +23,7 @@ available!
 
 ### Electric Book Works version
 
-This fork was created by Electric Book Works, and differs from [@res's version](https://github.com/rse/node-prince) in several important ways.
+This fork was created by Electric Book Works for use in the [Electric Book template](https://github.com/electricbookworks/electric-book/). It differs from [@res's version](https://github.com/rse/node-prince) in several important ways.
 
 * You can set which version of Prince you want to install by specifying that in your project's `package.json` file. E.g.:
   ```json
