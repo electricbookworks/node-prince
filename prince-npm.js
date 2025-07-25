@@ -53,15 +53,13 @@ var mkdirp        = require("mkdirp");
 var princeVersion = function () {
     var parentPackage = path.normalize(process.env.INIT_CWD + "/package.json");
     var princeConfig = require(parentPackage).prince;
-    var version = "14.2"; // default
-    if (princeConfig) {
-        if (princeConfig.version) {
+    var version = "16.1"; // default
+
+    if (princeConfig?.version) {
             version = princeConfig.version;
-            return version;
-        }
-    } else {
-        return;
     }
+
+    return version;
 };
 
 /*  determine whether to use prince or prince-books executable */
