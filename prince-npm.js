@@ -51,12 +51,36 @@ var mkdirp        = require("mkdirp");
 
 /*  determine preferred prince version in parent package.json  */
 var princeVersion = function () {
-    var parentPackage = path.normalize(process.env.INIT_CWD + "/package.json");
-    var princeConfig = require(parentPackage).prince;
-    var version = "16.1"; // default
+    var parentPackage
 
-    if (princeConfig?.version) {
-        version = princeConfig.version;
+    // We try process.env.INIT_CWD first because that returns
+    // the correct path if this script is being run by npm as part of
+    // the normal `npm install` process on a book's workspace setup.
+    // If it doesn't exist, we're probably trying to run this script
+    // manually with Node, and then we'll need process.cwd().
+    if (process.env.INIT_CWD) {
+        parentPackage = path.normalize(process.env.INIT_CWD + "/package.json");
+    } else {
+        parentPackage = path.normalize(process.cwd() + "/package.json");
+    }
+
+    var version = "16.1"; // default
+    try {
+        var princeConfig = require(parentPackage).prince;
+    } catch (e) {
+        console.log("Error reading package.json: ", e.message);
+    }
+
+    if (parentPackage) {
+        console.log('Found parent project\'s package.json file.');
+        if (princeConfig?.version) {
+            version = String(princeConfig.version);
+            console.log('Prince version specified in package.json: ' + version);
+        } else {
+            console.log('No Prince version specified. Using Prince ' + version);
+        }
+    } else {
+        console.log('No parent-project package.json file found.');
     }
 
     return version;
@@ -288,15 +312,16 @@ if (process.argv.length !== 3) {
 var destdir;
 if (process.argv[2] === "install") {
     /*  installation procedure  */
-    console.log("++ checking for globally installed PrinceXML");
+    console.log("Checking for globally installed PrinceXML");
     princeInfo().then(function (prince) {
         console.log("-- found prince(1) command: " + chalk.blue(prince.command));
         console.log("-- found prince(1) version: " + chalk.blue(prince.version));
-    }, function (/* error */) {
-        console.log("++ downloading PrinceXML version " + princeVersion());
+    }, function (error) {
+        console.log("Prince not found installed: ", error);
+        console.log("Downloading PrinceXML version " + princeVersion());
         princeDownloadURL().then(function (url) {
             downloadData(url).then(function (data) {
-                console.log("++ locally unpacking PrinceXML distribution");
+                console.log("Locally unpacking PrinceXML distribution");
                 destdir = path.join(__dirname, "prince");
                 var destfile;
                 if (process.platform === "win32" && princeExecutable() === "prince") {
@@ -331,9 +356,9 @@ if (process.argv[2] === "install") {
                         fs.chmodSync(path.join(destdir, "lib/prince/bin/" + princeExecutable()), fs.constants.S_IRWXU
                             | fs.constants.S_IRGRP | fs.constants.S_IXGRP | fs.constants.S_IROTH | fs.constants.S_IXOTH);
                         fs.unlinkSync(destfile);
-                        console.log("-- OK: local PrinceXML installation now available");
+                        console.log("Local PrinceXML installation now available");
                     }, function (error) {
-                        console.log(chalk.red("** ERROR: failed to extract: " + error));
+                        console.log(chalk.red("ERROR: failed to extract: " + error));
                     });
                 }
                 else if (process.platform === "darwin") {
@@ -344,9 +369,9 @@ if (process.argv[2] === "install") {
                         fs.chmodSync(path.join(destdir, "lib/prince/bin/" + princeExecutable()), fs.constants.S_IRWXU
                             | fs.constants.S_IRGRP | fs.constants.S_IXGRP | fs.constants.S_IROTH | fs.constants.S_IXOTH);
                         fs.unlinkSync(destfile);
-                        console.log("-- OK: local PrinceXML installation now available");
+                        console.log("Local PrinceXML installation now available");
                     }, function (error) {
-                        console.log(chalk.red("** ERROR: failed to extract: " + error));
+                        console.log(chalk.red("ERROR: failed to extract: " + error));
                     });
                 }
                 else {
@@ -355,13 +380,13 @@ if (process.argv[2] === "install") {
                     mkdirp.sync(destdir);
                     extractTarball(destfile, destdir, 1).then(function () {
                         fs.unlinkSync(destfile);
-                        console.log("-- OK: local PrinceXML installation now available");
+                        console.log("Local PrinceXML installation now available");
                     }, function (error) {
-                        console.log(chalk.red("** ERROR: failed to extract: " + error));
+                        console.log(chalk.red("ERROR: failed to extract: " + error));
                     });
                 }
             }, function (error) {
-                console.log(chalk.red("** ERROR: failed to download: " + error));
+                console.log(chalk.red("ERROR: failed to download: " + error));
             });
         });
     });
@@ -373,9 +398,9 @@ else if (process.argv[2] === "uninstall") {
         console.log("++ deleting locally unpacked PrinceXML distribution");
         rimraf(destdir, function (error) {
             if (error !== null)
-                console.log(chalk.red("** ERROR: " + error));
+                console.log(chalk.red("ERROR: " + error));
             else
-                console.log("-- OK: done");
+                console.log("OK: uninstallation complete");
         });
     }
 }
@@ -383,4 +408,3 @@ else {
     console.log(chalk.red("ERROR: invalid argument"));
     process.exit(1);
 }
-
