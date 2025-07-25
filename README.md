@@ -37,7 +37,7 @@ This fork was created by Electric Book Works, and differs from [@res's version](
     "version": "20220701"
   }
   ```
-* You can also specify a specific version of Prince for Books using `books-YYYMMDD`. E.g.:
+* You can also specify a specific version of Prince for Books using `books-YYYYMMDD`. E.g.:
   ```json
     "prince": {
       "version": "books-20220701"
